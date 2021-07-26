@@ -187,10 +187,16 @@ const clickBingo = function(){
 
 /* 현재단계 출력 */
 const changedStepShow = function(){
+    console.log(Number(step)%3);
     if(step < 2){
         document.getElementById('nowStep').innerText = '초기값선택 '+String(Number(step)+1);
     }else{
-        document.getElementById('nowStep').innerText = String(Number(step)-1);
+        if(Number(step)%3 == 0){
+            document.getElementById('nowStep').innerText = String(Number(step)-1)+' bingo!!!';
+        }else{
+            document.getElementById('nowStep').innerText = String(Number(step)-1);
+        }
+
     }
 };
 

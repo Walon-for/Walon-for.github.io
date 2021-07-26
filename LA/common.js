@@ -1,5 +1,5 @@
 window.addEventListener('load',function(){
-    document.getElementById('nowSize').value = 25;
+    document.getElementById('nowSize').value = 30;
 
     //빙고판 사이즈 다운
     document.getElementById('sizeMinus').addEventListener('click',function(){

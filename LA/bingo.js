@@ -85,12 +85,12 @@ const checkBingo = function(){
                     break;
                 }
                 if(j==4){
-                   for(let k=0; k<5; k++){
-                       bingo[step][i][k] = 2;
-                       document.getElementById('diamond'+i+k).classList.remove('grayDiamond');
-                       document.getElementById('diamond'+i+k).classList.add('redDiamond');
-                   }
-                   bingoDone[step][i] = 1;
+                    for(let k=0; k<5; k++){
+                        bingo[step][i][k] = 2;
+                        document.getElementById('diamond'+i+k).classList.remove('grayDiamond');
+                        document.getElementById('diamond'+i+k).classList.add('redDiamond');
+                    }
+                    bingoDone[step][i] = 1;
                 }
             }
         }
@@ -155,6 +155,14 @@ const clickBingo = function(){
     clickedId = clickedId.replace('diamond', '').trim();
     let clickedX = clickedId.substr(0,1);
     let clickedY = clickedId.substr(1,1);
+
+    //빙고된곳 다시뒤집기금지
+    if(bingo[step][clickedX][clickedY] == 2){
+        return;
+    }if(step<2 && bingo[step][clickedX][clickedY] == 1){
+        return;
+    }
+
     step++;
 
     //console.log(clickedX+' '+clickedY);
@@ -183,6 +191,9 @@ const clickBingo = function(){
 
     checkBingo();
     changedStepShow();
+    DfsBingo[step] = bingo[step].map(v => v.slice());
+    DfsBingoDone[step] = bingoDone[step].slice();
+    bingoDfs(0,0,0);
 };
 
 /* 현재단계 출력 */
@@ -190,11 +201,109 @@ const changedStepShow = function(){
     if(step < 2){
         document.getElementById('nowStep').innerText = '초기값선택 '+String(Number(step)+1);
     }else{
-        document.getElementById('nowStep').innerText = String(Number(step)-1);
+        if((Number(step)-1)%3 == 0){
+            document.getElementById('nowStep').innerText = String((Number(step)-1)%3+3)+' bingo turn!!';
+        }else{
+            document.getElementById('nowStep').innerText = String((Number(step)-1)%3);
+        }
     }
 };
 
-/* 이벤트 리스너 */
+/******************* DFS ***********************/
+let DfsBingo = new Array();
+let DfsBingoDone = new Array();
+/* 빙고가능한곳 계산 */
+const bingoDfs = function(nowStep,x,y){
+    if(step < 2){ return; }
+
+    //console.log(nowStep+' '+x+' '+y);
+
+    //첫번째 1-2-3
+    if(nowStep > 0){
+        DfsBingo[step+nowStep] = DfsBingo[step+nowStep-1].map(v => v.slice());
+
+        if(DfsBingo[step+nowStep] == 2){
+            return;
+        }else{
+            //x,y 놓기
+            console.log(DfsClickBingo(nowStep,x,y));
+            console.log(DfsBingo[step+nowStep]);
+            return;
+        }
+
+    }
+
+    if(nowStep < 2){
+        for(let i=0; i<5; i++){
+            for(let j=0; j<5; j++){
+                bingoDfs(nowStep+1, i, j);
+            }
+        }
+    }else if(nowStep == 3){
+
+    }
+
+};
+
+/* dfs x,y 뒤집기 */
+const DfsClickBingo = function(nowStep, x, y){
+    for(let i=0; i<5; i++){
+        const cx = Number(x)+Number(checkX[i]);
+        const cy = Number(y)+Number(checkY[i]);
+
+        if(cx>=0 && cy>=0 && cx<=4 && cy<=4){
+            if(DfsBingo[step+nowStep][cx][cy] == 1){
+                DfsBingo[step+nowStep][cx][cy] = 0;
+            }else if(DfsBingo[step+nowStep][cx][cy] == 0){
+                DfsBingo[step+nowStep][cx][cy] = 1;
+            }
+        }
+    }
+
+    //빙고찾기
+    let startBingoCount = 0;
+    let endBingoCount = 0;
+
+    for(let i=0; i<12; i++){
+        if(DfsBingoDone[step+nowStep][i] == 1){
+            startBingoCount++;
+        }
+    }
+
+    //세로체크
+    for(let i=0; i<5; i++){
+        if (DfsBingoDone[step+nowStep][i+5] == 0) {
+            for(let j=0; j<5; j++) {
+                if(DfsBingo[step+nowStep][j][i] < 1){
+                    break;
+                }
+
+                if(j==4){
+                    for(let k=0; k<5; k++){
+                        DfsBingo[step+nowStep][k][i] = 2;
+                    }
+                    DfsBingoDone[step+nowStep][i+5] = 1;
+                }
+            }
+        }
+    }
+
+    for(let i=0; i<12; i++){
+        if(DfsBingoDone[step+nowStep][i] == 1){
+            endBingoCount++;
+        }
+    }
+
+    if(startBingoCount < endBingoCount){
+        return 1;
+    }else{
+        return 0;
+    }
+
+}
+
+
+/************************** 이벤트 리스너 ****************************/
 window.addEventListener('load',function(){
 
     init();
