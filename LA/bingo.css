@@ -24,8 +24,11 @@ html,body{
     cursor:pointer;
 }
 
-.red{
+.redDiamond{
     background-color:#AA1C08;
+}
+.grayDiamond{
+    background-color:gray;
 }
 
 .diamond a{
@@ -42,4 +45,8 @@ html,body{
     float:right;
     position:relative;
     cursor:pointer;
+}
+
+h1, span{
+    color:white;
 }
