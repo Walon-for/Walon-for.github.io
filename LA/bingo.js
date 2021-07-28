@@ -1,7 +1,7 @@
-let bingo = new Array();   //빙고판 0:기본상태 1:뒤집힌상태 2:빙고완성상태
+let bingo = [];   //빙고판 0:기본상태 1:뒤집힌상태 2:빙고완성상태
 let step;
 bingo.push([[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]);
-let bingoDone = new Array();  //빙고완료 [가로 세로 대각선]
+let bingoDone = [];  //빙고완료 [가로 세로 대각선]
 bingoDone.push([[0,0,0,0,0,0,0,0,0,0,0,0]]);
 
 /*
@@ -35,6 +35,7 @@ const init = function(){
     for(let i=0; i<tiles.length; i++){
         tiles[i].classList.remove('grayDiamond');
         tiles[i].classList.remove('redDiamond');
+        tiles[i].classList.remove('possibleDiamond');
     }
 };
 
@@ -47,14 +48,19 @@ const cancel = function(){
         for(let j=0; j<5; j++){
             document.getElementById('diamond'+i+j).classList.remove('grayDiamond');
             document.getElementById('diamond'+i+j).classList.remove('redDiamond');
+            document.getElementById('diamond'+i+j).classList.remove('possibleDiamond');
 
-            if(bingo[step][i][j] == 2){
+            if(bingo[step][i][j] === 2){
                 document.getElementById('diamond'+i+j).classList.add('redDiamond');
-            }else if(bingo[step][i][j] == 1){
+            }else if(bingo[step][i][j] === 1){
                 document.getElementById('diamond'+i+j).classList.add('grayDiamond');
+            }
+            if(firstBingo[step][i][j] === 3){
+                document.getElementById('diamond'+i+j).classList.add('possibleDiamond');
             }
         }
     }
+
 };
 
 /*  빙고상황 출력  */
@@ -156,16 +162,12 @@ const clickBingo = function(){
     let clickedX = clickedId.substr(0,1);
     let clickedY = clickedId.substr(1,1);
 
-    //빙고된곳 다시뒤집기금지
-    if(bingo[step][clickedX][clickedY] == 2){
-        return;
-    }if(step<2 && bingo[step][clickedX][clickedY] == 1){
+
+    if(step<2 && bingo[step][clickedX][clickedY] == 1){
         return;
     }
 
     step++;
-
-    //console.log(clickedX+' '+clickedY);
 
     bingo[step] = bingo[step-1].map(v => v.slice());
 
@@ -191,8 +193,10 @@ const clickBingo = function(){
 
     checkBingo();
     changedStepShow();
+    removeDfsClass();
     DfsBingo[step] = bingo[step].map(v => v.slice());
     DfsBingoDone[step] = bingoDone[step].slice();
+    firstBingo[step] = bingo[step].map(v => v.slice());
     bingoDfs(0,0,0);
 };
 
@@ -210,39 +214,41 @@ const changedStepShow = function(){
 };
 
 /******************* DFS ***********************/
-let DfsBingo = new Array();
-let DfsBingoDone = new Array();
+let DfsBingo = [];
+let DfsBingoDone = [];
+let firstBingo = [];
+
 /* 빙고가능한곳 계산 */
-const bingoDfs = function(nowStep,x,y){
+const bingoDfs = function(nowStep, x, y, firstX, firstY){
     if(step < 2){ return; }
+    const stepCount = 4-((step-2)%3+1);
 
-    //console.log(nowStep+' '+x+' '+y);
-
-    //첫번째 1-2-3
     if(nowStep > 0){
         DfsBingo[step+nowStep] = DfsBingo[step+nowStep-1].map(v => v.slice());
+        DfsBingoDone[step+nowStep] = DfsBingoDone[step+nowStep-1].slice();
 
-        if(DfsBingo[step+nowStep] == 2){
+        if(firstBingo[step][firstX][firstY] == 3){
             return;
         }else{
             //x,y 놓기
-            console.log(DfsClickBingo(nowStep,x,y));
-            console.log(DfsBingo[step+nowStep]);
-            return;
-        }
+            const check = DfsClickBingo(nowStep,x,y);
 
-    }
-
-    if(nowStep < 2){
-        for(let i=0; i<5; i++){
-            for(let j=0; j<5; j++){
-                bingoDfs(nowStep+1, i, j);
+            if(nowStep == stepCount && check > 0){
+                firstBingo[step][firstX][firstY] = 3;
+                document.getElementById('diamond'+firstX+firstY).classList.add('possibleDiamond');
             }
         }
-    }else if(nowStep == 3){
 
     }
 
+    if(nowStep < stepCount){
+        for(let i=0; i<5; i++){
+            for(let j=0; j<5; j++){
+                if(nowStep == 0)    bingoDfs(nowStep+1, i, j, i, j);
+                else     bingoDfs(nowStep+1, i, j, firstX, firstY);
+            }
+        }
+    }
 };
 
 /* dfs x,y 뒤집기 */
@@ -270,6 +276,23 @@ const DfsClickBingo = function(nowStep, x, y){
         }
     }
 
+    //가로체크
+    for(let i=0; i<5; i++){
+        if (DfsBingoDone[step+nowStep][i] == 0) {
+            for(let j=0; j<5; j++) {
+                if(DfsBingo[step+nowStep][i][j] < 1){
+                    break;
+                }
+                if(j==4){
+                    for(let k=0; k<5; k++){
+                        DfsBingo[step+nowStep][i][k] = 2;
+                    }
+                    DfsBingoDone[step+nowStep][i] = 1;
+                }
+            }
+        }
+    }
+
     //세로체크
     for(let i=0; i<5; i++){
         if (DfsBingoDone[step+nowStep][i+5] == 0) {
@@ -288,6 +311,34 @@ const DfsClickBingo = function(nowStep, x, y){
         }
     }
 
+    //대각선체크
+    if (DfsBingoDone[step+nowStep][10] == 0) {
+        for(let i=0,j=0; i<5; i++,j++){
+            if(DfsBingo[step+nowStep][i][j] < 1){
+                break;
+            }
+            if(j==4){
+                for(let k=0,m=0; k<5; k++,m++){
+                    DfsBingo[step+nowStep][k][m] = 2;
+                }
+                DfsBingoDone[step+nowStep][10] = 1;
+            }
+        }
+    }
+    if (DfsBingoDone[step+nowStep][11] == 0) {
+        for(let i=4,j=0; i>=0; i--,j++){
+            if(DfsBingo[step+nowStep][i][j] < 1){
+                break;
+            }
+            if(i==0){
+                for(let k=4,m=0; k>=0; k--,m++){
+                    DfsBingo[step+nowStep][k][m] = 2;
+                }
+                DfsBingoDone[step+nowStep][11] = 1;
+            }
+        }
+    }
+
     for(let i=0; i<12; i++){
         if(DfsBingoDone[step+nowStep][i] == 1){
             endBingoCount++;
@@ -302,6 +353,13 @@ const DfsClickBingo = function(nowStep, x, y){
 
 }
 
+const removeDfsClass = function(){
+    const tiles = document.getElementsByClassName('diamond');
+
+    for(let i=0; i<tiles.length; i++){
+        tiles[i].classList.remove('possibleDiamond');
+    }
+}
 
 /************************** 이벤트 리스너 ****************************/
 window.addEventListener('load',function(){
