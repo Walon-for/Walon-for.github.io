@@ -4,8 +4,8 @@ html,body{
 }
 
 #big_diamond{
-    width:30%;
-    margin: 30%;
+    width:25%;
+    margin:10%;
     float:left;
     transform:rotate(45deg);
     -ms-transform:rotate(45deg);
@@ -64,9 +64,10 @@ h1, span, a{
     background-color:#AA1C08;
 }
 .grayDiamond{
-    background-color:gray;
+    background-color:lightgray;
 }
 .possibleDiamond{
     background-image:url('star.png');
     background-repeat: no-repeat;
+    background-position: center;
 }
